@@ -10,6 +10,8 @@ coverage/
 
 # env files
 .env*
+apps/web/.env*
+apps/worker/.env*
 
 # misc
 .DS_Store
