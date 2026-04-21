@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useUser } from "@clerk/nextjs";
 import { createClerkSupabaseClient } from "@/lib/supabase";
-import type { JournalEntry, MoodLevel } from "@/types";
+import type { JournalEntry, MoodLevel, WeatherOutdoorScore } from "@/types";
 
 interface JournalRow {
   id: string;
@@ -14,9 +14,21 @@ interface JournalRow {
   tags: string[];
   text: string;
   created_at: string;
+  weather_city?: string | null;
+  weather_temp?: number | null;
+  weather_description?: string | null;
+  weather_icon?: string | null;
+  weather_outdoor_score?: WeatherOutdoorScore | null;
 }
 
 function rowToEntry(row: JournalRow): JournalEntry {
+  const hasWeather =
+    !!row.weather_city ||
+    row.weather_temp != null ||
+    !!row.weather_description ||
+    !!row.weather_icon ||
+    !!row.weather_outdoor_score;
+
   return {
     id: row.id,
     date: row.date,
@@ -25,7 +37,22 @@ function rowToEntry(row: JournalRow): JournalEntry {
     tags: row.tags || [],
     text: row.text || "",
     createdAt: row.created_at,
+    weather: hasWeather
+      ? {
+          city: row.weather_city ?? undefined,
+          temperature: row.weather_temp != null ? Number(row.weather_temp) : undefined,
+          description: row.weather_description ?? undefined,
+          icon: row.weather_icon ?? undefined,
+          outdoorScore: row.weather_outdoor_score ?? undefined,
+        }
+      : undefined,
   };
+}
+
+// Simple event bus so separate useJournalEntries instances stay in sync
+const listeners = new Set<() => void>();
+function notifyAll() {
+  listeners.forEach((fn) => fn());
 }
 
 export function useJournalEntries() {
@@ -55,6 +82,13 @@ export function useJournalEntries() {
     fetchEntries();
   }, [fetchEntries]);
 
+  useEffect(() => {
+    listeners.add(fetchEntries);
+    return () => {
+      listeners.delete(fetchEntries);
+    };
+  }, [fetchEntries]);
+
   const addEntry = async (payload: Omit<JournalEntry, "id">) => {
     if (!user?.id) return;
     const { data, error } = await supabase
@@ -67,6 +101,11 @@ export function useJournalEntries() {
         tags: payload.tags,
         text: payload.text,
         created_at: payload.createdAt,
+        weather_city: payload.weather?.city,
+        weather_temp: payload.weather?.temperature,
+        weather_description: payload.weather?.description,
+        weather_icon: payload.weather?.icon,
+        weather_outdoor_score: payload.weather?.outdoorScore,
       })
       .select()
       .single();
@@ -77,6 +116,7 @@ export function useJournalEntries() {
     }
     if (data) {
       setEntries((prev) => [rowToEntry(data), ...prev]);
+      notifyAll();
     }
   };
 
@@ -87,6 +127,7 @@ export function useJournalEntries() {
       return;
     }
     setEntries((prev) => prev.filter((e) => e.id !== id));
+    notifyAll();
   };
 
   return { entries, loading, addEntry, deleteEntry, refetch: fetchEntries };

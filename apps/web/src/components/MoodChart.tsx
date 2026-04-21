@@ -6,9 +6,10 @@ import type { JournalEntry, MoodLevel } from "@/types";
 
 interface MoodChartProps {
   entries: JournalEntry[];
+  showWeatherOverlay?: boolean;
 }
 
-export default function MoodChart({ entries }: MoodChartProps) {
+export default function MoodChart({ entries, showWeatherOverlay = false }: MoodChartProps) {
   if (entries.length < 2) {
     return (
       <div className="py-8 text-center">
@@ -33,6 +34,26 @@ export default function MoodChart({ entries }: MoodChartProps) {
   });
 
   const polyline = points.map((p) => `${p.x},${p.y}`).join(" ");
+  const weatherEntries = sorted.filter((entry) => entry.weather?.temperature != null);
+  const temperatures = weatherEntries.map((entry) => Number(entry.weather?.temperature));
+  const minTemp = temperatures.length > 0 ? Math.min(...temperatures) : 0;
+  const maxTemp = temperatures.length > 0 ? Math.max(...temperatures) : 0;
+  const tempRange = maxTemp - minTemp || 1;
+  const weatherPoints = sorted
+    .map((entry, i) => {
+      if (entry.weather?.temperature == null) {
+        return null;
+      }
+
+      const x = padX + (i / (sorted.length - 1)) * (w - padX * 2);
+      const y =
+        padY +
+        (1 - (Number(entry.weather.temperature) - minTemp) / tempRange) * (h - padY * 2);
+
+      return { x, y, entry };
+    })
+    .filter((point): point is NonNullable<typeof point> => point !== null);
+  const weatherPolyline = weatherPoints.map((p) => `${p.x},${p.y}`).join(" ");
 
   // Y-axis labels
   const levels: MoodLevel[] = ["great", "good", "okay", "low", "rough"];
@@ -98,6 +119,49 @@ export default function MoodChart({ entries }: MoodChartProps) {
           strokeLinejoin="round"
         />
 
+        {showWeatherOverlay && weatherPoints.length >= 2 && (
+          <>
+            <polyline
+              points={weatherPolyline}
+              fill="none"
+              stroke="var(--event-blue-border)"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeDasharray="5 4"
+            />
+            {weatherPoints.map((point, i) => (
+              <circle
+                key={`weather-${i}`}
+                cx={point.x}
+                cy={point.y}
+                r="2.5"
+                fill="var(--event-blue-border)"
+                stroke="var(--bg-secondary)"
+                strokeWidth="1"
+              />
+            ))}
+            <text
+              x={w - padX + 4}
+              y={padY + 3}
+              fontSize="7"
+              fill="var(--event-blue-border)"
+              fontWeight="500"
+            >
+              {Math.round(maxTemp)} C
+            </text>
+            <text
+              x={w - padX + 4}
+              y={h - padY + 3}
+              fontSize="7"
+              fill="var(--event-blue-border)"
+              fontWeight="500"
+            >
+              {Math.round(minTemp)} C
+            </text>
+          </>
+        )}
+
         {/* Dots */}
         {points.map((p, i) => (
           <g key={i}>
@@ -124,6 +188,24 @@ export default function MoodChart({ entries }: MoodChartProps) {
           </g>
         ))}
       </svg>
+      {showWeatherOverlay && weatherPoints.length >= 2 && (
+        <div className="mt-2 flex items-center gap-4 text-[10px]" style={{ color: "var(--text-tertiary)" }}>
+          <span className="flex items-center gap-1">
+            <span className="inline-block h-[2px] w-4" style={{ background: "var(--accent-start)" }} />
+            Mood
+          </span>
+          <span className="flex items-center gap-1">
+            <span
+              className="inline-block h-[2px] w-4"
+              style={{
+                background: "var(--event-blue-border)",
+                borderTop: "1px dashed var(--event-blue-border)",
+              }}
+            />
+            Temperature
+          </span>
+        </div>
+      )}
     </div>
   );
 }

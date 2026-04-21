@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useJournalEntries } from "@/hooks/useJournalEntries";
+import { useLiveWeather } from "@/hooks/useLiveWeather";
+import { useUserSettings } from "@/hooks/useUserSettings";
 import { todayString } from "@/lib/dates";
 import { MOOD_CONFIG, MOOD_LEVELS, CONTEXT_TAGS } from "@/lib/emotions";
 import { MoodIcon, EmotionIcon } from "@/components/MoodIcon";
@@ -94,6 +96,8 @@ interface EmotionCheckinProps {
 
 export default function EmotionCheckin({ onComplete }: EmotionCheckinProps) {
   const { addEntry } = useJournalEntries();
+  const { settings } = useUserSettings();
+  const { weather } = useLiveWeather(settings.weatherCity);
   const [step, setStep] = useState(-2); // -2 = intro, -1 = breathing
   const [mood, setMood] = useState<MoodLevel | null>(null);
   const [emotion, setEmotion] = useState("");
@@ -117,6 +121,15 @@ export default function EmotionCheckin({ onComplete }: EmotionCheckinProps) {
       tags,
       text,
       createdAt: new Date().toISOString(),
+      weather: weather
+        ? {
+            city: weather.displayCity,
+            temperature: Math.round(weather.temp),
+            description: weather.description,
+            icon: weather.icon,
+            outdoorScore: weather.outdoorScore,
+          }
+        : undefined,
     });
     onComplete();
   }
@@ -325,6 +338,26 @@ export default function EmotionCheckin({ onComplete }: EmotionCheckinProps) {
               <span>
                 Feeling <strong style={{ color: MOOD_CONFIG[mood].color }}>{emotion || MOOD_CONFIG[mood].label}</strong>
                 {tags.length > 0 && <> · {tags.join(", ")}</>}
+              </span>
+            </div>
+          )}
+
+          {weather && (
+            <div
+              className="flex items-center gap-3 px-4 py-3 text-xs"
+              style={{ background: "var(--bg-tertiary)", color: "var(--text-tertiary)" }}
+            >
+              <img
+                src={`https://openweathermap.org/img/wn/${weather.icon}.png`}
+                alt={weather.description}
+                className="w-6 h-6"
+              />
+              <span>
+                Weather at check-in: <strong style={{ color: "var(--text-primary)" }}>{weather.displayCity}</strong>
+                {" · "}
+                {Math.round(weather.temp)} C
+                {" · "}
+                <span className="capitalize">{weather.description}</span>
               </span>
             </div>
           )}

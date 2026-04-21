@@ -43,8 +43,27 @@ create table if not exists journal_entries (
   emotion text not null,
   tags text[] default '{}',
   text text default '',
+  weather_city text,
+  weather_temp numeric,
+  weather_description text,
+  weather_icon text,
+  weather_outdoor_score text
+    check (weather_outdoor_score in ('good', 'caution', 'rest')),
   created_at timestamptz default now()
 );
+
+alter table journal_entries add column if not exists weather_city text;
+alter table journal_entries add column if not exists weather_temp numeric;
+alter table journal_entries add column if not exists weather_description text;
+alter table journal_entries add column if not exists weather_icon text;
+alter table journal_entries add column if not exists weather_outdoor_score text;
+
+alter table journal_entries
+  drop constraint if exists journal_entries_weather_outdoor_score_check;
+
+alter table journal_entries
+  add constraint journal_entries_weather_outdoor_score_check
+  check (weather_outdoor_score is null or weather_outdoor_score in ('good', 'caution', 'rest'));
 
 alter table journal_entries enable row level security;
 

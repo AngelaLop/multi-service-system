@@ -24,6 +24,15 @@ export interface NewsArticle {
 
 // Journal & Emotion Check-in
 export type MoodLevel = "great" | "good" | "okay" | "low" | "rough";
+export type WeatherOutdoorScore = "good" | "caution" | "rest";
+
+export interface JournalWeatherContext {
+  city?: string;
+  temperature?: number;
+  description?: string;
+  icon?: string;
+  outdoorScore?: WeatherOutdoorScore;
+}
 
 export interface JournalEntry {
   id: string;
@@ -33,6 +42,7 @@ export interface JournalEntry {
   tags: string[];
   text: string;
   createdAt: string; // ISO timestamp
+  weather?: JournalWeatherContext;
 }
 
 export type ThemeId =
@@ -97,7 +107,7 @@ export interface LiveWeatherSnapshot {
   tempMax?: number;
   forecast: ForecastItem[];
   wellnessSummary: string;
-  outdoorScore: "good" | "caution" | "rest";
+  outdoorScore: WeatherOutdoorScore;
   observedAt: string;
   updatedAt: string;
 }
