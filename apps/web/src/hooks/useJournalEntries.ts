@@ -57,12 +57,17 @@ function notifyAll() {
 
 export function useJournalEntries() {
   const supabase = createClerkSupabaseClient();
-  const { user } = useUser();
+  const { user, isLoaded } = useUser();
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchEntries = useCallback(async () => {
-    if (!user?.id) return;
+    if (!isLoaded) return;
+    if (!user?.id) {
+      setEntries([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     const { data, error } = await supabase
       .from("journal_entries")
@@ -76,7 +81,7 @@ export function useJournalEntries() {
       setEntries(data.map(rowToEntry));
     }
     setLoading(false);
-  }, [user?.id, supabase]);
+  }, [isLoaded, user?.id, supabase]);
 
   useEffect(() => {
     fetchEntries();

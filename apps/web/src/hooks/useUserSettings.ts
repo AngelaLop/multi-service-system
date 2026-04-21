@@ -8,7 +8,7 @@ import type { ThemeId, UserSettings, WellnessFocus } from "@/types";
 
 export function useUserSettings() {
   const supabase = createClerkSupabaseClient();
-  const { user } = useUser();
+  const { user, isLoaded } = useUser();
   const [settings, setSettings] = useState<UserSettings>({
     theme: "zen-dark",
     weatherCity: "Chicago",
@@ -17,17 +17,27 @@ export function useUserSettings() {
   const [loading, setLoading] = useState(true);
 
   const fetchSettings = useCallback(async () => {
-    if (!user?.id) return;
+    if (!isLoaded) return;
+
+    if (!user?.id) {
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
 
     const { data, error } = await supabase
       .from("user_settings")
       .select("*")
-      .single();
+      .maybeSingle();
 
     if (error) {
-      console.error("[useUserSettings] fetch error:", error.message, "- creating defaults");
-      // No settings row yet — create one with defaults
+      console.error("[useUserSettings] fetch error:", error.message);
+      setLoading(false);
+      return;
+    }
+
+    if (!data) {
       const { data: newData, error: insertErr } = await supabase
         .from("user_settings")
         .insert({
@@ -41,34 +51,40 @@ export function useUserSettings() {
 
       if (insertErr) {
         console.error("[useUserSettings] insert error:", insertErr.message);
+        setLoading(false);
+        return;
       }
+
       if (newData) {
-        const s = {
+        const nextSettings = {
           theme: newData.theme as ThemeId,
           weatherCity: newData.weather_city,
           wellnessFocus: (newData.wellness_focus || "balanced") as WellnessFocus,
         };
-        setSettings(s);
-        applyTheme(s.theme);
+
+        setSettings(nextSettings);
+        applyTheme(nextSettings.theme);
       }
-    } else if (data) {
-      const s = {
-        theme: data.theme as ThemeId,
-        weatherCity: data.weather_city,
-        wellnessFocus: (data.wellness_focus || "balanced") as WellnessFocus,
-      };
-      setSettings(s);
-      applyTheme(s.theme);
+
+      setLoading(false);
+      return;
     }
 
+    const nextSettings = {
+      theme: data.theme as ThemeId,
+      weatherCity: data.weather_city,
+      wellnessFocus: (data.wellness_focus || "balanced") as WellnessFocus,
+    };
+
+    setSettings(nextSettings);
+    applyTheme(nextSettings.theme);
     setLoading(false);
-  }, [user?.id, supabase]);
+  }, [isLoaded, user?.id, supabase]);
 
   useEffect(() => {
     fetchSettings();
   }, [fetchSettings]);
 
-  // Apply default theme on mount (before settings load)
   useEffect(() => {
     applyTheme("zen-dark");
   }, []);
@@ -80,6 +96,7 @@ export function useUserSettings() {
       .from("user_settings")
       .update({ theme, updated_at: new Date().toISOString() })
       .eq("user_id", user?.id);
+
     if (error) console.error("[useUserSettings] update theme error:", error.message);
   };
 
@@ -89,6 +106,7 @@ export function useUserSettings() {
       .from("user_settings")
       .update({ weather_city: weatherCity, updated_at: new Date().toISOString() })
       .eq("user_id", user?.id);
+
     if (error) console.error("[useUserSettings] update city error:", error.message);
   };
 
@@ -101,6 +119,7 @@ export function useUserSettings() {
         updated_at: new Date().toISOString(),
       })
       .eq("user_id", user?.id);
+
     if (error) console.error("[useUserSettings] update focus error:", error.message);
   };
 

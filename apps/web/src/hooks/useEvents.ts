@@ -39,12 +39,17 @@ function notifyAll() {
 
 export function useEvents() {
   const supabase = createClerkSupabaseClient();
-  const { user } = useUser();
+  const { user, isLoaded } = useUser();
   const [events, setEvents] = useState<PlannerEvent[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchEvents = useCallback(async () => {
-    if (!user?.id) return;
+    if (!isLoaded) return;
+    if (!user?.id) {
+      setEvents([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     const { data, error } = await supabase
       .from("events")
@@ -59,7 +64,7 @@ export function useEvents() {
       setEvents(data.map(rowToEvent));
     }
     setLoading(false);
-  }, [user?.id, supabase]);
+  }, [isLoaded, user?.id, supabase]);
 
   useEffect(() => {
     fetchEvents();

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { UserButton, useClerk, useUser } from "@clerk/nextjs";
 import MiniCalendar from "./MiniCalendar";
 
@@ -14,8 +14,15 @@ const navItems = [
 ];
 
 function UserSection({ onNavigate }: { onNavigate?: () => void }) {
-  const { user } = useUser();
+  const { user, isLoaded } = useUser();
   const { signOut } = useClerk();
+  const router = useRouter();
+  const displayName =
+    user?.fullName ||
+    user?.firstName ||
+    user?.username ||
+    user?.emailAddresses?.[0]?.emailAddress ||
+    (isLoaded ? "Account" : "Loading...");
 
   return (
     <div className="px-4 py-3 border-t space-y-2" style={{ borderColor: "var(--border-color)" }}>
@@ -23,7 +30,7 @@ function UserSection({ onNavigate }: { onNavigate?: () => void }) {
         <UserButton appearance={{ elements: { avatarBox: "w-8 h-8" } }} />
         <div className="flex-1 min-w-0">
           <div className="text-xs font-medium truncate" style={{ color: "var(--text-primary)" }}>
-            {user?.firstName || user?.emailAddresses?.[0]?.emailAddress || "Account"}
+            {displayName}
           </div>
           <div className="text-[10px] truncate" style={{ color: "var(--text-tertiary)" }}>
             {user?.emailAddresses?.[0]?.emailAddress || ""}
@@ -31,9 +38,10 @@ function UserSection({ onNavigate }: { onNavigate?: () => void }) {
         </div>
       </div>
       <button
-        onClick={() => {
+        onClick={async () => {
           onNavigate?.();
-          signOut({ redirectUrl: "/sign-in" });
+          await signOut({ redirectUrl: "/sign-in" });
+          router.replace("/sign-in");
         }}
         className="w-full flex items-center gap-2 px-3 py-1.5 text-xs transition-colors rounded"
         style={{ color: "var(--text-secondary)", borderRadius: "var(--radius-sm)" }}

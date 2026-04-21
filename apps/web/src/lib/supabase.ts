@@ -1,12 +1,11 @@
 "use client";
 
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
-import { useSession } from "@clerk/nextjs";
-import { useEffect, useRef } from "react";
+import { useAuth } from "@clerk/nextjs";
+import { useEffect } from "react";
 
-// Singleton: one Supabase client, one token getter
 let supabaseInstance: SupabaseClient | null = null;
-let getTokenFn: (() => Promise<string | null>) | null = null;
+let accessTokenFn: (() => Promise<string | null>) | null = null;
 
 function getClient(): SupabaseClient {
   const supabaseKey =
@@ -23,41 +22,25 @@ function getClient(): SupabaseClient {
           autoRefreshToken: false,
           detectSessionInUrl: false,
         },
-        global: {
-          fetch: async (url, options = {}) => {
-            const clerkToken = getTokenFn ? await getTokenFn() : null;
-            const headers = new Headers(options?.headers);
-            if (clerkToken) {
-              headers.set("Authorization", `Bearer ${clerkToken}`);
-            }
-            return fetch(url, { ...options, headers });
-          },
-        },
+        accessToken: async () => (accessTokenFn ? await accessTokenFn() : null),
       }
     );
   }
+
   return supabaseInstance;
 }
 
 export function createClerkSupabaseClient(): SupabaseClient {
   // eslint-disable-next-line react-hooks/rules-of-hooks
-  const { session } = useSession();
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const sessionRef = useRef(session);
-  sessionRef.current = session;
+  const { getToken, isLoaded } = useAuth();
 
-  // Keep the module-level token getter in sync with the latest session
   // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
-    getTokenFn = session ? () => session.getToken() : null;
-    return () => {
-      getTokenFn = null;
-    };
-  }, [session]);
+    accessTokenFn = isLoaded ? () => getToken() : async () => null;
+  }, [getToken, isLoaded]);
 
-  // Set synchronously on first render too
-  if (session && !getTokenFn) {
-    getTokenFn = () => session.getToken();
+  if (isLoaded) {
+    accessTokenFn = () => getToken();
   }
 
   return getClient();

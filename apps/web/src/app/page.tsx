@@ -73,8 +73,8 @@ const cardStyle = {
 };
 
 export default function Home() {
-  const { user } = useUser();
-  const { settings } = useUserSettings();
+  const { user, isLoaded: userLoaded } = useUser();
+  const { settings, loading: settingsLoading } = useUserSettings();
   const { events, toggleComplete, addEvent } = useEvents();
   const { entries: journalEntries } = useJournalEntries();
   const { state: pomo, dispatch: pomoDispatch } = usePomodoro();
@@ -92,7 +92,15 @@ export default function Home() {
     .slice(0, 5);
   const todayEntry = journalEntries.find((j) => j.date === today);
   const cityHour = getHourForLocation(settings.weatherCity);
-  const greeting = getZenGreeting(user?.firstName || undefined, cityHour);
+  const greeting = getZenGreeting(
+    userLoaded
+      ? user?.firstName ||
+          user?.username ||
+          user?.primaryEmailAddress?.emailAddress?.split("@")[0] ||
+          undefined
+      : undefined,
+    cityHour
+  );
   const cityTimeLabel = formatLocationTime(settings.weatherCity);
   const illustrationHour = cityHour ?? new Date().getHours();
 
@@ -135,6 +143,11 @@ export default function Home() {
                   {greeting.text} <span className="font-semibold">{greeting.name}</span>
                 </h1>
                 <p className="text-xs sm:text-sm mt-1" style={{ color: "var(--text-tertiary)" }}>
+                  {settingsLoading
+                    ? "Loading your live planner..."
+                    : "Plan your day around live weather, your mood, and real-time signals."}
+                </p>
+                <p className="text-[11px] sm:text-xs mt-1" style={{ color: "var(--text-tertiary)" }}>
                   {formatDisplayDate(today)}
                   {cityTimeLabel ? ` · ${settings.weatherCity} local time ${cityTimeLabel}` : ""}
                 </p>
