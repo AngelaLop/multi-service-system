@@ -29,12 +29,22 @@ Live deployment:
 ## Product
 The app helps users plan their day around live outdoor conditions and exchange-rate changes.
 
+Key product features:
+
+- live weather-aware wellness briefing
+- live `USD/COP` card with 7-day trend
+- planner events and a default wind-down breathing suggestion
+- journal entries with captured weather-at-check-in context
+- mood trend chart with optional temperature overlay
+- weather-pattern summary for mood journaling
+
 Core user flow:
 
 1. Sign up / sign in with Clerk
 2. Choose a city and wellness focus in Settings
 3. Add planner events and journal entries
 4. See live weather and USD/COP data update in the dashboard without refreshing
+5. Review journal history with weather context and mood/temperature patterns
 
 ## Architecture
 
@@ -81,6 +91,7 @@ Auth + personalization:
 - Supabase stores user-owned planner and settings data behind RLS
 - Each user can personalize city and wellness focus
 - The dashboard content changes based on the logged-in user's preferences
+- Journal entries now also store the weather snapshot at the time of check-in for pattern analysis
 
 ## Environment variables
 
@@ -119,6 +130,10 @@ Expected MCP setup command from the assignment:
 - `claude mcp add --transport http supabase https://mcp.supabase.com/mcp`
 
 This project's database schema is defined in `supabase-schema.sql`, and Realtime must be enabled on the worker-written tables.
+
+Important migration note:
+
+- rerun `supabase-schema.sql` after pulling the latest code so `journal_entries` gets the new weather context columns
 
 ## Submission-facing checklist
 
