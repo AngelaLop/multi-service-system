@@ -5,9 +5,26 @@ Assignment 4 for MPCS 51238 (Design, Build, Ship, Spring 2026).
 
 This repository contains a multi-service wellness planner:
 
-- `apps/web` is a Next.js frontend deployed to Vercel
+- `apps/web` is a `Next.js` + `Tailwind CSS` frontend deployed to Vercel
 - `apps/worker` is a Node.js background worker deployed to Railway
 - Supabase stores planner data, live weather snapshots, FX data, and pushes Realtime updates
+
+Repository layout:
+
+- `apps/web`
+- `apps/worker`
+- `supabase-schema.sql`
+- `README.md`
+- `CLAUDE.md`
+
+Public repository:
+
+- `https://github.com/AngelaLop/multi-service-system`
+
+Live deployment:
+
+- Frontend: `https://web-two-omega-60.vercel.app`
+- Worker: Railway service in `weatherwise-worker` project
 
 ## Product
 The app helps users plan their day around live outdoor conditions and exchange-rate changes.
@@ -34,6 +51,12 @@ Data flow:
 3. Supabase Realtime publishes row changes
 4. Next.js frontend performs initial reads, then subscribes to live table updates
 
+Deployment targets:
+
+- Vercel for `apps/web`
+- Railway for `apps/worker`
+- Supabase for database, auth integration, RLS, and Realtime
+
 ## Supabase tables
 
 User-owned tables with RLS:
@@ -47,7 +70,24 @@ Public read / worker write tables:
 - `weather_snapshots`
 - `fx_rates`
 
+Realtime is enabled for:
+
+- `weather_snapshots`
+- `fx_rates`
+
+Auth + personalization:
+
+- Clerk handles sign-up and sign-in
+- Supabase stores user-owned planner and settings data behind RLS
+- Each user can personalize city and wellness focus
+- The dashboard content changes based on the logged-in user's preferences
+
 ## Environment variables
+
+Local env files:
+
+- `apps/web/.env.local`
+- `apps/worker/.env`
 
 ### Web (`apps/web`)
 
@@ -66,6 +106,41 @@ Public read / worker write tables:
 - `OPENWEATHERMAP_API_KEY`
 - `DEFAULT_CITIES` (optional, comma separated)
 - `POLL_INTERVAL_MS` (optional)
+
+Platform dashboards:
+
+- The same web variables must exist in Vercel
+- The same worker variables must exist in Railway
+
+## Supabase MCP
+
+Expected MCP setup command from the assignment:
+
+- `claude mcp add --transport http supabase https://mcp.supabase.com/mcp`
+
+This project's database schema is defined in `supabase-schema.sql`, and Realtime must be enabled on the worker-written tables.
+
+## Submission-facing checklist
+
+This repo is intended to satisfy the Week 4 requirements:
+
+- monorepo with `apps/web` and `apps/worker`
+- `Next.js` + `Tailwind CSS`
+- Railway background worker polling external data
+- Supabase storage + Realtime subscriptions
+- auth with Clerk
+- personalized user data and preferences
+- `CLAUDE.md` architecture description
+- public GitHub repo with commit history
+- deployed frontend on Vercel
+- deployed worker on Railway
+
+Still verify before submission:
+
+- classmates can sign up on the live Vercel URL
+- the Railway worker is still healthy
+- the Slack video reflection URL is posted
+- multiple commits remain visible in GitHub history
 
 ## Notes for agents
 
