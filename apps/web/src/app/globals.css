@@ -1,0 +1,92 @@
+@import "tailwindcss";
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Theme CSS Custom Properties — overridden by theme switcher */
+:root {
+  /* Zen Dark (default) — Japanese-inspired warm tones */
+  --bg-primary: #1a1a1a;
+  --bg-secondary: #232322;
+  --bg-tertiary: #2c2c2a;
+  --bg-surface: #363633;
+  --text-primary: #e8e4de;
+  --text-secondary: rgba(232, 228, 222, 0.7);
+  --text-tertiary: rgba(232, 228, 222, 0.45);
+  --border-color: rgba(232, 228, 222, 0.06);
+  --border-color-strong: rgba(232, 228, 222, 0.12);
+  --accent-start: #c4786a;
+  --accent-end: #d4a07a;
+  --sidebar-width: 260px;
+  --font-primary: 'Inter', sans-serif;
+  --font-size-base: 14px;
+  --line-height-base: 1.6;
+  --letter-spacing: normal;
+  --word-spacing: normal;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --border-width: 1px;
+
+  /* Event colors — warm, intentional */
+  --event-blue-bg: rgba(80, 140, 180, 0.15);
+  --event-blue-border: #5a9ab5;
+  --event-blue-text: #8ec4db;
+  --event-red-bg: rgba(195, 100, 90, 0.15);
+  --event-red-border: #c46a5e;
+  --event-red-text: #e0a098;
+  --event-green-bg: rgba(100, 170, 100, 0.15);
+  --event-green-border: #6aaa6a;
+  --event-green-text: #9dd49d;
+  --event-purple-bg: rgba(150, 115, 180, 0.15);
+  --event-purple-border: #9672b0;
+  --event-purple-text: #bfa4d4;
+  --event-amber-bg: rgba(200, 165, 80, 0.15);
+  --event-amber-border: #c8a550;
+  --event-amber-text: #e0cc8a;
+}
+
+@theme inline {
+  --color-bg-primary: var(--bg-primary);
+  --color-bg-secondary: var(--bg-secondary);
+  --color-bg-tertiary: var(--bg-tertiary);
+  --color-bg-surface: var(--bg-surface);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-tertiary: var(--text-tertiary);
+  --color-border: var(--border-color);
+  --color-border-strong: var(--border-color-strong);
+  --color-accent-start: var(--accent-start);
+  --color-accent-end: var(--accent-end);
+}
+
+body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-primary);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-base);
+  letter-spacing: var(--letter-spacing);
+  word-spacing: var(--word-spacing);
+}
+
+/* Scrollbar styling for dark theme */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--bg-surface);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-tertiary);
+}
